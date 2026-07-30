@@ -5,6 +5,7 @@ import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import zlib from "zlib";
 import { GoogleGenAI, Type } from "@google/genai";
+import nodemailer from "nodemailer";
 
 dotenv.config();
 
@@ -495,7 +496,7 @@ const CANDIDATE_GEMINI_MODELS = [
 
 async function callGeminiWithFallback(ai: any, generateParams: any, maxRetriesPerModel: number = 2) {
   let lastError: any = null;
-
+  
   // Pass 1: Try with full generateParams & structured schema
   for (const modelName of CANDIDATE_GEMINI_MODELS) {
     for (let attempt = 1; attempt <= maxRetriesPerModel; attempt++) {
@@ -578,7 +579,7 @@ app.post("/api/ai/cad-qa", async (req, res) => {
   }
 
   try {
-    const ai = new GoogleGenAI({
+    const ai = new GoogleGenAI({ 
       apiKey,
       httpOptions: {
         headers: {
@@ -680,10 +681,8 @@ class StoneDBEngine {
       if (fs.existsSync(DB_FILE_PATH)) {
         const raw = fs.readFileSync(DB_FILE_PATH, "utf-8");
         const parsed = JSON.parse(raw);
-        const SEED_JOB_IDS = new Set(['SF-1042', 'SF-1039', 'SF-1044', 'SF-1031', 'SF-1028', 'SF-1019', 'SF-1045', 'SF-1036', 'SF-1041', 'SF-1043']);
-        const cleanedJobs = (parsed.jobs || []).filter((j: any) => j && j.id && !SEED_JOB_IDS.has(j.id));
         this.data = {
-          jobs: cleanedJobs,
+          jobs: parsed.jobs || [],
           materials: parsed.materials || [],
           offcuts: parsed.offcuts || [],
           drawings: parsed.drawings || [],
@@ -728,19 +727,35 @@ class StoneDBEngine {
     return this.data;
   }
 
-  public updateData(newData: Partial<StoneDBData>) {
-    if (newData.jobs) this.data.jobs = newData.jobs;
-    if (newData.materials) this.data.materials = newData.materials;
-    if (newData.offcuts) this.data.offcuts = newData.offcuts;
-    if (newData.drawings) this.data.drawings = newData.drawings;
-    if (newData.installations) this.data.installations = newData.installations;
-    if (newData.invoices) this.data.invoices = newData.invoices;
-    if (newData.warnings) this.data.warnings = newData.warnings;
-    if (newData.activities) this.data.activities = newData.activities;
-    if (newData.history) this.data.history = newData.history;
-    if (newData.photos) this.data.photos = newData.photos;
-    if (newData.users) this.data.users = newData.users;
-    if (newData.leaves) this.data.leaves = newData.leaves;
+  public updateData(newData: Partial<StoneDBData>, mode: 'replace' | 'upsert' = 'upsert') {
+    const keys: (keyof StoneDBData)[] = [
+      'jobs', 'materials', 'offcuts', 'drawings', 'installations',
+      'invoices', 'warnings', 'activities', 'history', 'photos', 'users', 'leaves'
+    ];
+
+    keys.forEach(key => {
+      const newItems = newData[key];
+      if (Array.isArray(newItems)) {
+        if (mode === 'replace') {
+          (this.data[key] as any[]) = newItems;
+        } else {
+          // Upsert items by id so partial saves never wipe existing collection
+          const existing = (this.data[key] as any[]) || [];
+          newItems.forEach(item => {
+            if (!item || (!item.id && !item.slab_id)) return;
+            const targetId = item.id || item.slab_id;
+            const idx = existing.findIndex(x => x && (x.id || x.slab_id) && String(x.id || x.slab_id).trim().toLowerCase() === String(targetId).trim().toLowerCase());
+            if (idx >= 0) {
+              existing[idx] = { ...existing[idx], ...item };
+            } else {
+              existing.unshift(item);
+            }
+          });
+          (this.data[key] as any[]) = existing;
+        }
+      }
+    });
+
     this.persistToDisk();
   }
 }
@@ -822,6 +837,8 @@ async function sanitizeTableData(tableName: string, dataArray: any[]): Promise<a
 // 3. Save / Upsert state to StoneDB Persistence Engine
 app.post("/api/db/save", async (req, res) => {
   const {
+    mode,
+    isFullReplace,
     jobs,
     materials,
     offcuts,
@@ -849,6 +866,8 @@ app.post("/api/db/save", async (req, res) => {
       }
     }
 
+    const saveMode = (mode === 'replace' || isFullReplace) ? 'replace' : 'upsert';
+
     stoneDB.updateData({
       jobs,
       materials,
@@ -862,7 +881,7 @@ app.post("/api/db/save", async (req, res) => {
       photos,
       users,
       leaves
-    });
+    }, saveMode);
 
     res.json({ success: true, message: "Database saved and persisted successfully!" });
   } catch (error: any) {
@@ -989,28 +1008,35 @@ app.post("/api/team_users/hard-delete", async (req, res) => {
 });
 
 // Delete job endpoint
-app.post("/api/db/jobs/delete", async (req, res) => {
-  const { jobId } = req.body;
+const handleJobDelete = async (jobId: string, res: any) => {
   if (!jobId) {
     return res.status(400).json({ success: false, message: "Missing jobId" });
   }
   try {
     const data = stoneDB.getData();
     data.jobs = data.jobs.filter((j: any) => String(j.id).trim().toLowerCase() !== String(jobId).trim().toLowerCase());
-    data.materials = data.materials.filter((m: any) => String(m.job_id).trim().toLowerCase() !== String(jobId).trim().toLowerCase());
-    data.offcuts = data.offcuts.filter((o: any) => String(o.job_id).trim().toLowerCase() !== String(jobId).trim().toLowerCase());
-    data.drawings = data.drawings.filter((d: any) => String(d.job_id).trim().toLowerCase() !== String(jobId).trim().toLowerCase());
-    data.installations = data.installations.filter((i: any) => String(i.job_id).trim().toLowerCase() !== String(jobId).trim().toLowerCase());
-    data.invoices = data.invoices.filter((i: any) => String(i.job_id).trim().toLowerCase() !== String(jobId).trim().toLowerCase());
-    data.warnings = data.warnings.filter((w: any) => String(w.job_id).trim().toLowerCase() !== String(jobId).trim().toLowerCase());
-    data.activities = data.activities.filter((a: any) => String(a.job_id).trim().toLowerCase() !== String(jobId).trim().toLowerCase());
-    data.history = data.history.filter((h: any) => String(h.job_id).trim().toLowerCase() !== String(jobId).trim().toLowerCase());
-    data.photos = data.photos.filter((p: any) => String(p.job_id).trim().toLowerCase() !== String(jobId).trim().toLowerCase());
+    data.materials = data.materials.filter((m: any) => String(m.job_id || '').trim().toLowerCase() !== String(jobId).trim().toLowerCase());
+    data.offcuts = data.offcuts.filter((o: any) => String(o.job_id || '').trim().toLowerCase() !== String(jobId).trim().toLowerCase());
+    data.drawings = data.drawings.filter((d: any) => String(d.job_id || '').trim().toLowerCase() !== String(jobId).trim().toLowerCase());
+    data.installations = data.installations.filter((i: any) => String(i.job_id || '').trim().toLowerCase() !== String(jobId).trim().toLowerCase());
+    data.invoices = data.invoices.filter((i: any) => String(i.job_id || '').trim().toLowerCase() !== String(jobId).trim().toLowerCase());
+    data.warnings = data.warnings.filter((w: any) => String(w.job_id || '').trim().toLowerCase() !== String(jobId).trim().toLowerCase());
+    data.activities = data.activities.filter((a: any) => String(a.job_id || '').trim().toLowerCase() !== String(jobId).trim().toLowerCase());
+    data.history = data.history.filter((h: any) => String(h.job_id || '').trim().toLowerCase() !== String(jobId).trim().toLowerCase());
+    data.photos = data.photos.filter((p: any) => String(p.job_id || '').trim().toLowerCase() !== String(jobId).trim().toLowerCase());
     stoneDB.persistToDisk();
-    res.json({ success: true, message: `Job ${jobId} deleted successfully` });
+    return res.json({ success: true, message: `Job ${jobId} deleted successfully` });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err?.message });
+    return res.status(500).json({ success: false, error: err?.message });
   }
+};
+
+app.post("/api/db/jobs/delete", async (req, res) => {
+  await handleJobDelete(req.body.jobId, res);
+});
+
+app.delete("/api/db/jobs/:jobId", async (req, res) => {
+  await handleJobDelete(req.params.jobId, res);
 });
 
 // AI-Powered PDF Job Order Parser using Gemini AI models
@@ -1306,11 +1332,63 @@ app.post("/api/auth/send-reset-notification", async (req, res) => {
     return res.status(400).json({ success: false, message: "Registered email is required" });
   }
 
-  console.log(`[AUTH EMAIL DISPATCH] Sent Password Reset Notification to ${email} with verification code: ${resetCode}`);
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+  const smtpPort = Number(process.env.SMTP_PORT || 587);
+  const smtpFrom = process.env.SMTP_FROM || `StoneFlow App <${smtpUser || "no-reply@stoneflow.app"}>`;
+
+  let liveSent = false;
+  let smtpError = "";
+
+  if (smtpUser && smtpPass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+      });
+
+      await transporter.sendMail({
+        from: smtpFrom,
+        to: email,
+        subject: "StoneFlow Password Reset Verification Code",
+        html: `
+          <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e7; border-radius: 8px;">
+            <h2 style="color: #0284c7; margin-top: 0;">Password Reset Verification</h2>
+            <p>You requested a password reset for your StoneFlow account (<b>${email}</b>).</p>
+            <p>Your 6-digit verification code is:</p>
+            <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #0f172a; background: #f1f5f9; padding: 12px 20px; text-align: center; border-radius: 6px; margin: 20px 0;">
+              ${resetCode}
+            </div>
+            <p style="color: #64748b; font-size: 13px;">If you did not request this code, you can safely ignore this email.</p>
+          </div>
+        `,
+      });
+      liveSent = true;
+      console.log(`[AUTH EMAIL DISPATCH] Real email successfully sent via SMTP to ${email}`);
+    } catch (err: any) {
+      smtpError = err?.message || "Failed to send email via SMTP";
+      console.warn(`[AUTH EMAIL DISPATCH ERROR] SMTP send failed:`, smtpError);
+    }
+  } else {
+    console.log(`[AUTH EMAIL DISPATCH] SMTP_USER/SMTP_PASS environment variables are not set. Standard simulation mode active for ${email}. Code: ${resetCode}`);
+  }
+
   res.json({
     success: true,
-    message: `Reset verification code (${resetCode}) sent to registered email ${email}.`,
     emailSent: true,
+    deliveredLive: liveSent,
+    smtpConfigured: Boolean(smtpUser && smtpPass),
+    smtpError: smtpError || undefined,
+    resetCode: liveSent ? undefined : resetCode, // Include fallback code if live delivery isn't configured so user is never locked out
+    message: liveSent
+      ? `Password reset code sent to ${email} via email.`
+      : `Email dispatch endpoint invoked for ${email}. (SMTP server credentials missing in environment)`,
     timestamp: new Date().toISOString()
   });
 });
