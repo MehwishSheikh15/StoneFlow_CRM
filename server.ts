@@ -10,11 +10,16 @@ import nodemailer from "nodemailer";
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 // Middleware for parsing JSON
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Health Check Endpoints for Railway & Container Orchestrators
+app.get(["/health", "/healthz", "/api/health", "/ping"], (req, res) => {
+  res.status(200).json({ status: "ok", uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
 
 // 1. Connection check endpoint
 app.get("/api/db/config", async (req, res) => {
@@ -717,7 +722,11 @@ class StoneDBEngine {
       }
       const tmpPath = `${DB_FILE_PATH}.tmp`;
       fs.writeFileSync(tmpPath, JSON.stringify(this.data, null, 2), "utf-8");
-      fs.renameSync(tmpPath, DB_FILE_PATH);
+      try {
+        fs.renameSync(tmpPath, DB_FILE_PATH);
+      } catch (renameErr) {
+        fs.writeFileSync(DB_FILE_PATH, JSON.stringify(this.data, null, 2), "utf-8");
+      }
     } catch (err) {
       console.error("[StoneDB] Disk write error:", err);
     }
@@ -1407,7 +1416,12 @@ async function setupVite() {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      const indexPath = path.join(distPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send('Application build files not found. Please run npm run build.');
+      }
     });
   }
 
@@ -1419,3 +1433,4 @@ async function setupVite() {
 setupVite();
 
 export default app;
+
