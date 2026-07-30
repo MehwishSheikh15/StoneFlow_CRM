@@ -1,0 +1,55 @@
+{
+  "jobs": [],
+  "materials": [],
+  "offcuts": [],
+  "drawings": [],
+  "installations": [],
+  "invoices": [],
+  "warnings": [],
+  "activities": [],
+  "history": [],
+  "photos": [],
+  "users": [
+    {
+      "id": "u-1",
+      "name": "Mehwish",
+      "initials": "MS",
+      "role": "owner",
+      "avatarBg": "bg-indigo-600 text-white",
+      "avatar_bg": "bg-indigo-600 text-white",
+      "email": "owner@stoneflow.com",
+      "password": "owner123"
+    },
+    {
+      "id": "u-2",
+      "name": "Sara M.",
+      "initials": "SM",
+      "role": "office",
+      "avatarBg": "bg-zinc-600 text-white",
+      "avatar_bg": "bg-zinc-600 text-white",
+      "email": "office@stoneflow.com",
+      "password": "office123"
+    },
+    {
+      "id": "u-3",
+      "name": "Rashid K.",
+      "initials": "RK",
+      "role": "factory",
+      "avatarBg": "bg-teal-600 text-white",
+      "avatar_bg": "bg-teal-600 text-white",
+      "email": "factory@stoneflow.com",
+      "password": "factory123"
+    },
+    {
+      "id": "u-4",
+      "name": "Tom J.",
+      "initials": "TJ",
+      "role": "installer",
+      "avatarBg": "bg-amber-600 text-white",
+      "avatar_bg": "bg-amber-600 text-white",
+      "email": "installer@stoneflow.com",
+      "password": "installer123"
+    }
+  ],
+  "leaves": []
+}
