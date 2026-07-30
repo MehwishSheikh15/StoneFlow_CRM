@@ -141,6 +141,11 @@ export class DbSyncService {
     this.load();
     this.setupLocalTabSync();
     this.setupRealtime();
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        this.syncFromDatabase().catch(console.warn);
+      }, 50);
+    }
   }
 
   public subscribe(cb: () => void): () => void {
@@ -175,18 +180,59 @@ export class DbSyncService {
         if (payload.success && payload.data) {
           const { jobs, materials, offcuts, drawings, installations, invoices, warnings, activities, history, photos, users, leaves } = payload.data;
           
-          if (Array.isArray(jobs) && jobs.length > 0) this.jobs = sanitizeIds(jobs, 'SF');
-          if (Array.isArray(materials) && materials.length > 0) this.materials = sanitizeIds(materials, 'm');
-          if (Array.isArray(offcuts) && offcuts.length > 0) this.offcuts = sanitizeIds(offcuts, 'oc');
+          if (Array.isArray(jobs)) {
+            const serverJobs = sanitizeIds(jobs, 'SF');
+            const merged = [...this.jobs];
+            serverJobs.forEach(sj => {
+              const idx = merged.findIndex(lj => String(lj.id).trim().toLowerCase() === String(sj.id).trim().toLowerCase());
+              if (idx >= 0) {
+                merged[idx] = { ...merged[idx], ...sj };
+              } else {
+                merged.unshift(sj);
+              }
+            });
+            this.jobs = merged;
+          }
+
+          if (Array.isArray(materials)) {
+            const serverMats = sanitizeIds(materials, 'm');
+            const merged = [...this.materials];
+            serverMats.forEach(sm => {
+              const targetId = sm.id || sm.slab_id;
+              const idx = merged.findIndex(lm => (lm.id || lm.slab_id) && String(lm.id || lm.slab_id).trim().toLowerCase() === String(targetId).trim().toLowerCase());
+              if (idx >= 0) {
+                merged[idx] = { ...merged[idx], ...sm };
+              } else {
+                merged.push(sm);
+              }
+            });
+            this.materials = merged;
+          }
+
+          if (Array.isArray(offcuts)) {
+            const serverOffcuts = sanitizeIds(offcuts, 'oc');
+            const merged = [...this.offcuts];
+            serverOffcuts.forEach(so => {
+              const targetId = so.id;
+              const idx = merged.findIndex(lo => lo.id && String(lo.id).trim().toLowerCase() === String(targetId).trim().toLowerCase());
+              if (idx >= 0) {
+                merged[idx] = { ...merged[idx], ...so };
+              } else {
+                merged.push(so);
+              }
+            });
+            this.offcuts = merged;
+          }
+
           if (Array.isArray(drawings) && drawings.length > 0) this.drawings = sanitizeIds(drawings, 'dr');
           if (Array.isArray(installations) && installations.length > 0) this.installations = sanitizeIds(installations, 'inst');
           if (Array.isArray(invoices) && invoices.length > 0) this.invoices = sanitizeIds(invoices, 'INV');
-          if (Array.isArray(warnings)) this.warnings = sanitizeIds(warnings, 'w');
-          if (Array.isArray(activities)) this.activities = sanitizeIds(activities, 'act');
-          if (Array.isArray(history)) this.history = sanitizeIds(history, 'h');
-          if (Array.isArray(photos)) this.photos = sanitizeIds(photos, 'p');
+          if (Array.isArray(warnings) && warnings.length > 0) this.warnings = sanitizeIds(warnings, 'w');
+          if (Array.isArray(activities) && activities.length > 0) this.activities = sanitizeIds(activities, 'act');
+          if (Array.isArray(history) && history.length > 0) this.history = sanitizeIds(history, 'h');
+          if (Array.isArray(photos) && photos.length > 0) this.photos = sanitizeIds(photos, 'p');
           if (Array.isArray(users) && users.length > 0) this.users = sanitizeIds(users, 'u');
-          if (Array.isArray(leaves)) this.leaves = sanitizeIds(leaves, 'leaf');
+          if (Array.isArray(leaves) && leaves.length > 0) this.leaves = sanitizeIds(leaves, 'lv');
 
           this.isSchemaMissing = false;
           this.saveLocalOnly();
@@ -325,6 +371,7 @@ export class DbSyncService {
 
   public async saveToDatabase(): Promise<void> {
     const payload = {
+      mode: 'replace',
       jobs: this.jobs,
       materials: this.materials,
       offcuts: this.offcuts,
@@ -373,10 +420,7 @@ export class DbSyncService {
     const savedUsers = localStorage.getItem('stoneflow_users');
     const savedLeaves = localStorage.getItem('stoneflow_leaves');
 
-    const SEED_JOB_IDS = new Set(['SF-1042', 'SF-1039', 'SF-1044', 'SF-1031', 'SF-1028', 'SF-1019', 'SF-1045', 'SF-1036', 'SF-1041', 'SF-1043']);
     let parsedJobs = savedJobs ? JSON.parse(savedJobs) : INITIAL_JOBS;
-    parsedJobs = (parsedJobs || []).filter((j: any) => j && j.id && !SEED_JOB_IDS.has(j.id));
-
     this.jobs = sanitizeIds(parsedJobs, 'SF');
     this.materials = savedMaterials ? sanitizeIds(JSON.parse(savedMaterials), 'm') : sanitizeIds(INITIAL_MATERIALS, 'm');
     this.offcuts = savedOffcuts ? sanitizeIds(JSON.parse(savedOffcuts), 'oc') : sanitizeIds(INITIAL_OFFCUTS, 'oc');
@@ -587,6 +631,11 @@ export class DbSyncService {
 
     try {
       fetch(`/api/db/jobs/${jobId}`, { method: 'DELETE' }).catch(console.warn);
+      fetch("/api/db/jobs/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobId })
+      }).catch(console.warn);
     } catch (err) {
       // Ignored
     }
@@ -1331,3 +1380,4 @@ export class DbSyncService {
 export const dbSync = new DbSyncService();
 // Alias dbMock for seamless compatibility
 export const dbMock = dbSync;
+
