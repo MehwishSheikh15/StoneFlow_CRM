@@ -20,7 +20,11 @@ export const STAGES = [
   { n: 11, name: 'Polishing', phase: 'Production', desc: 'Surface finishing completed' },
   { n: 12, name: 'QC Complete', phase: 'Production', desc: 'Quality checklist passed and photos uploaded' },
   { n: 13, name: 'Install Scheduled', phase: 'Installation', desc: 'Date confirmed with customer and installer' },
+<<<<<<< HEAD
   { n: 14, name: 'Installed', phase: 'Installation', desc: 'Piece fitted; completion photos & customer sign-off' },
+=======
+  { n: 14, name: 'Install Completed', phase: 'Installation', desc: 'Piece fitted; completion photos & customer sign-off' },
+>>>>>>> 169af18 (first commit)
   { n: 15, name: 'Invoice Sent', phase: 'Accounts', desc: 'Final invoice generated and sent' },
   { n: 16, name: 'Paid', phase: 'Accounts', desc: 'Payment received and reconciled' },
   { n: 17, name: 'Closed', phase: 'Accounts', desc: 'Job marked closed and archived' }
@@ -125,6 +129,7 @@ export function validateStageTransition(
     }
   }
 
+<<<<<<< HEAD
   // Transition 13 (Install Scheduled) -> 14 (Installed): Requires completion photos and customer signature
   if (currentStage === 13 && targetStage === 14) {
     const hasInstallationLog = installations.some(i => i.status === 'Completed' && i.signature_name);
@@ -133,6 +138,46 @@ export function validateStageTransition(
       return {
         allowed: false,
         reason: 'Checklist Incomplete: Transition to Stage 14 (Installed) requires installer completion sign-off and site photos.'
+=======
+  // Transition 13 (Install Scheduled) -> 14 (Install Completed): Installer must complete all checkboxes & update installer sign-off
+  if (currentStage === 13 && targetStage >= 14) {
+    const inst = installations.find(i => i.job_id === job.id);
+    const checklist = inst?.checklist || {};
+    const requiredChecklistKeys = ['leveling', 'epoxy_joints', 'cutouts_caulk', 'photos_uploaded', 'client_walkthrough'];
+    const allChecklistDone = requiredChecklistKeys.every(key => Boolean(checklist[key]));
+
+    const hasInstallerSignoff = inst?.status === 'Completed' || Boolean(inst?.signature_name);
+
+    if (!allChecklistDone || !hasInstallerSignoff) {
+      const missingItems = [];
+      if (!checklist.leveling) missingItems.push('Slabs Leveled');
+      if (!checklist.epoxy_joints) missingItems.push('Epoxy Joints');
+      if (!checklist.cutouts_caulk) missingItems.push('Cutouts Sealed');
+      if (!checklist.photos_uploaded) missingItems.push('Site Photos Uploaded');
+      if (!checklist.client_walkthrough) missingItems.push('Client Walkthrough');
+      if (!hasInstallerSignoff) missingItems.push('Installer Sign-Off Updated');
+
+      return {
+        allowed: false,
+        reason: `Installer Checklist Incomplete: Before advancing from Stage 13, the installer must complete all required tasks (${missingItems.join(', ')}).`
+      };
+    }
+  }
+
+  // Transition from Stage 14 (Install Completed) -> Billing / Closed (Stage 15, 16, 17): Requires verified Install Completed state with an installer-uploaded photo
+  if (targetStage >= 15 && currentStage < 15) {
+    if (currentStage < 14) {
+      return {
+        allowed: false,
+        reason: 'Workflow Gate Locked: Job must reach the Install Completed state (Stage 14) before proceeding to Billing Closed.'
+      };
+    }
+    const hasInstallerPhoto = photos.some(p => p.category === 'site' || p.category === 'qc');
+    if (!hasInstallerPhoto) {
+      return {
+        allowed: false,
+        reason: 'Workflow Gate Locked: Transition to Billing / Closed requires Job to be in Install Completed state verified with an installer-uploaded photo.'
+>>>>>>> 169af18 (first commit)
       };
     }
   }

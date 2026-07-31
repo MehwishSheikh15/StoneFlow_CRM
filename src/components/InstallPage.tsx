@@ -2,8 +2,13 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   MapPin, Navigation, Camera, Check, PenTool, Sparkles, Clock, Calendar, 
   ArrowRight, Lock, FileText, Upload, AlertTriangle, TrendingUp, Map as MapIcon, 
+<<<<<<< HEAD
   Zap, RefreshCw, Sliders, CheckCircle, Car, Eye, RefreshCw as RefreshIcon,
   Download, FileDown, Mail, MessageSquare, Play, Pause, Send, Bell, Globe, Trash2
+=======
+  Zap, RefreshCw, Sliders, CheckCircle, CheckCircle2, Car, Eye, RefreshCw as RefreshIcon,
+  Download, FileDown, Mail, MessageSquare, Play, Pause, Send, Bell, Globe, Trash2, Truck
+>>>>>>> 169af18 (first commit)
 } from 'lucide-react';
 import { Job } from '../types';
 import { dbSync as dbMock } from '../lib/dbSync';
@@ -28,12 +33,49 @@ export const InstallPage: React.FC<InstallPageProps> = ({
   currentUser,
   onAddPhotoClick
 }) => {
+<<<<<<< HEAD
+=======
+  const checklistItems = [
+    { key: 'leveling', label: 'Unload piece, level & align seams' },
+    { key: 'epoxy_joints', label: 'Epoxy joints sealed & polished' },
+    { key: 'cutouts_caulk', label: 'Sink & hob cutouts sealed & caulked' },
+    { key: 'photos_uploaded', label: 'Site installation photos uploaded' },
+    { key: 'client_walkthrough', label: 'Walkthrough with client & sign-off gather' }
+  ];
+
+>>>>>>> 169af18 (first commit)
   const [activeDay, setActiveDay] = useState<number>(2); // Wednesday (Wed 16) is default active
   const [signatureJobId, setSignatureOpen] = useState<string | null>(null);
   const [signName, setSignName] = useState('');
   const [localRefresh, setLocalRefresh] = useState(0);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [mapStyle, setMapStyle] = useState<'schematic' | 'terrain' | 'live'>('schematic');
+<<<<<<< HEAD
+=======
+  const [viewTab, setViewTab] = useState<'schedule' | 'completed'>('schedule');
+
+  // Completed installations list
+  const completedInstallations = useMemo(() => {
+    const installations = dbMock.getInstallations();
+    const map = new Map<string, { job: Job; inst?: any }>();
+
+    installations.filter(i => i.status === 'Completed').forEach(inst => {
+      const job = jobs.find(j => j.id === inst.job_id);
+      if (job) {
+        map.set(job.id, { job, inst });
+      }
+    });
+
+    jobs.filter(j => j.current_stage >= 14).forEach(job => {
+      if (!map.has(job.id)) {
+        const inst = installations.find(i => i.job_id === job.id);
+        map.set(job.id, { job, inst });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [jobs, localRefresh]);
+>>>>>>> 169af18 (first commit)
 
   // Traffic Conditions State
   const [trafficDelays, setTrafficDelays] = useState<Record<string, { delayMin: number; status: 'clear' | 'moderate' | 'heavy'; reason?: string }>>({
@@ -498,11 +540,23 @@ export const InstallPage: React.FC<InstallPageProps> = ({
 
   const handleAdvance = async (jobId: string, clientName: string, currentStage: number) => {
     if (currentStage === 13) {
+<<<<<<< HEAD
       await dbMock.updateStage(jobId, 14, currentUser.id, currentUser.name);
       onToast(`Began installation on site for ${clientName}`);
       setLocalRefresh(prev => prev + 1);
     } else {
       // Completed, open signature capture modal
+=======
+      const res = await dbMock.updateStage(jobId, 14, currentUser.id, currentUser.name);
+      if (res.success) {
+        onToast(`Began installation on site for ${clientName}. Job moved to Stage 14 (Installed).`);
+      } else {
+        onToast(`Gate Locked: ${res.error}`, true);
+      }
+      setLocalRefresh(prev => prev + 1);
+    } else {
+      // Stage 14 (Installed) -> open signature sign-off modal
+>>>>>>> 169af18 (first commit)
       setSignatureOpen(jobId);
     }
   };
@@ -742,7 +796,37 @@ export const InstallPage: React.FC<InstallPageProps> = ({
           </p>
         </div>
 
+<<<<<<< HEAD
         <div className="flex items-center gap-3">
+=======
+        <div className="flex flex-wrap items-center gap-3">
+          {/* View Tab Switcher */}
+          <div className="bg-soft p-1 rounded-xl flex gap-1 border border-line">
+            <button
+              onClick={() => setViewTab('schedule')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                viewTab === 'schedule'
+                  ? 'bg-paper text-ink shadow-xs border border-line/30'
+                  : 'text-mut hover:text-ink'
+              }`}
+            >
+              <Truck className="w-3.5 h-3.5 text-sap" />
+              Active Route ({installJobs.length})
+            </button>
+            <button
+              onClick={() => setViewTab('completed')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                viewTab === 'completed'
+                  ? 'bg-paper text-ink shadow-xs border border-line/30'
+                  : 'text-mut hover:text-ink'
+              }`}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              Installer History ({completedInstallations.length})
+            </button>
+          </div>
+
+>>>>>>> 169af18 (first commit)
           <button
             onClick={handleExportPDF}
             className="px-3.5 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
@@ -754,8 +838,16 @@ export const InstallPage: React.FC<InstallPageProps> = ({
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* Week Day Selector */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+=======
+      {/* Active Schedule & Route View */}
+      {viewTab === 'schedule' && (
+        <>
+          {/* Week Day Selector */}
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+>>>>>>> 169af18 (first commit)
         {weekDays.map((d, idx) => (
           <button
             key={idx}
@@ -788,6 +880,10 @@ export const InstallPage: React.FC<InstallPageProps> = ({
               const photos = dbMock.getPhotosForJob(j.id);
               const drawings = dbMock.getDrawingsForJob(j.id);
               const installation = dbMock.getInstallations().find(inst => inst.job_id === j.id);
+<<<<<<< HEAD
+=======
+              const checklist = installation?.checklist || {};
+>>>>>>> 169af18 (first commit)
               const traffic = getTrafficStatus(j.id);
 
               return (
@@ -843,6 +939,7 @@ export const InstallPage: React.FC<InstallPageProps> = ({
                     </a>
                   </div>
 
+<<<<<<< HEAD
                   {/* Custom Installation Sub-checks */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-3 text-xs py-1.5 border-b border-soft">
@@ -864,6 +961,55 @@ export const InstallPage: React.FC<InstallPageProps> = ({
                     <div className="flex items-center gap-3 text-xs py-1.5">
                       <div className="w-4 h-4 border border-line rounded bg-soft" />
                       <span className="font-medium text-ink">Walkthrough with client and gather digital sign-off</span>
+=======
+                  {/* Installer Quality Checklist */}
+                  <div className="space-y-2 p-3 bg-soft/60 border border-line rounded-xl">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-ink uppercase tracking-wider flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-sap" />
+                        Installer Quality Checklist ({checklistItems.filter(item => Boolean(checklist[item.key])).length}/5)
+                      </span>
+                      {checklistItems.every(item => Boolean(checklist[item.key])) && (installation?.signature_name || installation?.status === 'Completed') ? (
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300">
+                          Installer Complete • Ready for Owner Stage Move
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-300">
+                          Installer Pending ({5 - checklistItems.filter(item => Boolean(checklist[item.key])).length} tasks left)
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                      {checklistItems.map(item => {
+                        const isChecked = Boolean(checklist[item.key]);
+                        return (
+                          <button
+                            key={item.key}
+                            type="button"
+                            onClick={async () => {
+                              await dbMock.updateInstallationChecklist(j.id, item.key, !isChecked);
+                              onToast(`Checklist task "${item.label}" ${!isChecked ? 'completed' : 'unchecked'}.`);
+                              setLocalRefresh(prev => prev + 1);
+                            }}
+                            className={`p-2 rounded-lg border text-left flex items-center gap-2 transition-all cursor-pointer ${
+                              isChecked 
+                                ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200' 
+                                : 'bg-paper border-line text-ink hover:border-mut'
+                            }`}
+                          >
+                            <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                              isChecked ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-zinc-400 bg-paper'
+                            }`}>
+                              {isChecked && <Check className="w-3 h-3 stroke-[3px]" />}
+                            </div>
+                            <span className={`text-[11px] font-semibold ${isChecked ? 'line-through opacity-80' : ''}`}>
+                              {item.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+>>>>>>> 169af18 (first commit)
                     </div>
                   </div>
 
@@ -1016,19 +1162,56 @@ export const InstallPage: React.FC<InstallPageProps> = ({
                         Photos
                       </button>
                       
+<<<<<<< HEAD
                       {/* Only show PenTool/Complete buttons if not already signed/completed */}
                       {!installation?.signature_name && (
                         <>
                           <button 
                             onClick={() => setSignatureOpen(j.id)}
                             className="px-4 py-2 border border-line hover:border-mut rounded-xl text-xs font-semibold text-ink hover:bg-soft transition-all flex items-center gap-1.5"
+=======
+                      {/* If already signed/completed, show completion badge & option to advance to Stage 15 */}
+                      {installation?.signature_name ? (
+                        <div className="flex items-center gap-2">
+                          <span className="px-3 py-2 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-semibold flex items-center gap-1.5">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            Signed by {installation.signature_name}
+                          </span>
+                          {j.current_stage === 14 && (
+                            <button
+                              onClick={async () => {
+                                const res = await dbMock.updateStage(j.id, 15, currentUser.id, currentUser.name);
+                                if (res.success) {
+                                  onToast(`Moved Job ${j.id} to Stage 15 (Invoice Sent).`);
+                                  setLocalRefresh(prev => prev + 1);
+                                } else {
+                                  onToast(`Gate Locked: ${res.error}`, true);
+                                }
+                              }}
+                              className="px-4 py-2 bg-sap text-white font-bold rounded-xl text-xs hover:opacity-90 transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+                            >
+                              Advance to Billing (Stage 15)
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => setSignatureOpen(j.id)}
+                            className="px-4 py-2 border border-line hover:border-mut rounded-xl text-xs font-semibold text-ink hover:bg-soft transition-all flex items-center gap-1.5 cursor-pointer"
+>>>>>>> 169af18 (first commit)
                           >
                             <PenTool className="w-4 h-4 text-zinc-500" />
                             Signature
                           </button>
                           <button 
                             onClick={() => handleAdvance(j.id, j.client_name, j.current_stage)}
+<<<<<<< HEAD
                             className="px-5 py-2 bg-sidebg text-white font-semibold rounded-xl text-xs hover:opacity-95 transition-all flex items-center gap-1.5 dark:bg-zinc-200 dark:text-black"
+=======
+                            className="px-5 py-2 bg-sidebg text-white font-semibold rounded-xl text-xs hover:opacity-95 transition-all flex items-center gap-1.5 dark:bg-zinc-200 dark:text-black cursor-pointer"
+>>>>>>> 169af18 (first commit)
                           >
                             <Check className="w-4 h-4" />
                             {isOnSite ? 'Complete Install' : 'Mark On Site'}
@@ -1097,6 +1280,172 @@ export const InstallPage: React.FC<InstallPageProps> = ({
           </div>
         </div>
       </div>
+<<<<<<< HEAD
+=======
+      </>
+      )}
+
+      {/* Completed Installed History View */}
+      {viewTab === 'completed' && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Header Summary Card */}
+          <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <h3 className="text-base font-disp font-extrabold text-emerald-950 dark:text-emerald-100">
+                  Installer Work Log &amp; Site Handover History
+                </h3>
+              </div>
+              <p className="text-xs text-emerald-800 dark:text-emerald-300 mt-0.5">
+                Displays all completed stone benchtop and slab installations performed by site teams, including customer digital signatures, 5-point quality checklists, and site photos.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-emerald-600 text-white shadow-xs">
+                {completedInstallations.length} Installations Completed
+              </span>
+            </div>
+          </div>
+
+          {completedInstallations.length === 0 ? (
+            <div className="bg-paper border border-line rounded-2xl p-12 text-center text-sm text-mut">
+              No completed installations recorded yet. Once an installer completes on-site checklist items and client sign-off, it will appear here.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {completedInstallations.map(({ job, inst }) => {
+                const photos = dbMock.getPhotosForJob(job.id);
+                const sitePhotos = photos.filter(p => p.category === 'site' || p.category === 'qc');
+                const completedDate = inst?.completed_at 
+                  ? new Date(inst.completed_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                  : job.last_activity_at 
+                  ? new Date(job.last_activity_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                  : 'Recent';
+
+                const installerName = inst?.installer_id === 'u-3' ? 'Tom J. / Site Crew' : 'Installer Lead (Site Team)';
+                const signName = inst?.signature_name || job.client_name;
+                const signatureData = inst?.signature_data_url;
+
+                const defaultChecklistItems = [
+                  { title: 'Slabs Leveled & Seams Aligned', key: 'slab_leveled' },
+                  { title: 'Epoxy Joints Sealed & Polished', key: 'epoxy_joints' },
+                  { title: 'Sink & Hob Cutouts Caulked', key: 'cutouts_caulked' },
+                  { title: 'Site Photos Uploaded', key: 'photos_uploaded' },
+                  { title: 'Client Walkthrough & Sign-off', key: 'client_signoff' }
+                ];
+
+                return (
+                  <div
+                    key={job.id}
+                    className="bg-paper border border-line rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-5 hover:border-mut transition-all"
+                  >
+                    <div className="space-y-4">
+                      {/* Header row */}
+                      <div className="flex items-start justify-between gap-3 border-b border-soft pb-4">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono font-extrabold text-mut">{job.id}</span>
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 border border-emerald-300">
+                              STAGE 14: INSTALLED
+                            </span>
+                          </div>
+                          <h4 className="text-lg font-disp font-bold text-ink mt-1">
+                            {job.client_name}
+                          </h4>
+                          <p className="text-xs text-mut font-medium mt-0.5 flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-mut shrink-0" />
+                            {job.site_address}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => onJobSelect(job.id)}
+                          className="px-3 py-1.5 bg-soft hover:bg-line text-ink rounded-xl text-xs font-semibold border border-line cursor-pointer shrink-0"
+                        >
+                          Job Sheet
+                        </button>
+                      </div>
+
+                      {/* Material & Crew */}
+                      <div className="grid grid-cols-2 gap-2 text-xs bg-soft/50 p-3 rounded-xl border border-line/40">
+                        <div>
+                          <span className="text-[10px] font-bold text-mut block uppercase">Material Spec</span>
+                          <span className="font-semibold text-ink">{job.material || 'Engineered Quartz'}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-mut block uppercase">Installer Lead</span>
+                          <span className="font-semibold text-ink">{installerName}</span>
+                        </div>
+                      </div>
+
+                      {/* Checklist */}
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold text-mut uppercase tracking-wider block">
+                          On-Site Installation Tasks Completed (5/5)
+                        </span>
+                        <div className="space-y-1">
+                          {defaultChecklistItems.map((chk, i) => (
+                            <div key={i} className="flex items-center gap-2 text-xs font-medium text-emerald-900 dark:text-emerald-300">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <span>{chk.title}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Site Photos */}
+                      {sitePhotos.length > 0 && (
+                        <div className="space-y-1.5">
+                          <span className="text-[10px] font-bold text-mut uppercase tracking-wider block">
+                            On-Site Installation Photos ({sitePhotos.length})
+                          </span>
+                          <div className="grid grid-cols-3 gap-2">
+                            {sitePhotos.slice(0, 3).map((p, idx) => (
+                              <img
+                                key={idx}
+                                src={p.url}
+                                alt="Site install photo"
+                                className="w-full h-20 object-cover rounded-xl border border-line"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Customer Sign-off Proof */}
+                      <div className="bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 p-3 rounded-xl space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-emerald-900 dark:text-emerald-200 uppercase tracking-wider">
+                            Client Handover Sign-Off
+                          </span>
+                          <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
+                            Signed by {signName}
+                          </span>
+                        </div>
+                        {signatureData ? (
+                          <div className="bg-white dark:bg-zinc-900 p-2 rounded-lg border border-emerald-200 dark:border-emerald-800 flex items-center justify-center">
+                            <img src={signatureData} alt="Client Signature" className="h-10 object-contain" />
+                          </div>
+                        ) : (
+                          <div className="text-xs italic text-emerald-800 dark:text-emerald-300">
+                            Digital walkthrough signature verified on-site by {signName}.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-soft flex items-center justify-between text-xs text-mut">
+                      <span className="font-semibold text-ink">Completed Date:</span>
+                      <span>{completedDate}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+>>>>>>> 169af18 (first commit)
 
       {/* Signature Capture Dialog Modal */}
       {signatureJobId && (

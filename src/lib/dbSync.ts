@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { Job, Material, JobStatusHistory, ActivityLog, WarningItem, OffCut, Invoice, Installation, Drawing, User, PriorityLevel, JobPhoto, LeaveRequest } from '../types';
+=======
+import { Job, Material, JobStatusHistory, ActivityLog, WarningItem, OffCut, Invoice, Installation, Drawing, User, PriorityLevel, JobPhoto, LeaveRequest, QCRecord } from '../types';
+>>>>>>> 169af18 (first commit)
 import { validateStageTransition } from './workflowService';
 
 const isBrowser = typeof window !== 'undefined';
@@ -92,7 +96,11 @@ export const STAGES = [
   { n: 11, name: 'Polishing', phase: 'Production', desc: 'Surface finishing completed' },
   { n: 12, name: 'QC Complete', phase: 'Production', desc: 'Quality checklist passed and photos uploaded' },
   { n: 13, name: 'Install Scheduled', phase: 'Installation', desc: 'Date confirmed with customer and installer' },
+<<<<<<< HEAD
   { n: 14, name: 'Installed', phase: 'Installation', desc: 'Piece fitted; completion photos & customer sign-off' },
+=======
+  { n: 14, name: 'Install Completed', phase: 'Installation', desc: 'Piece fitted; completion photos & customer sign-off' },
+>>>>>>> 169af18 (first commit)
   { n: 15, name: 'Invoice Sent', phase: 'Accounts', desc: 'Final invoice generated and sent' },
   { n: 16, name: 'Paid', phase: 'Accounts', desc: 'Payment received and reconciled' },
   { n: 17, name: 'Closed', phase: 'Accounts', desc: 'Job marked closed and archived' }
@@ -136,6 +144,10 @@ export class DbSyncService {
   public photos: JobPhoto[] = [];
   public users: User[] = [];
   public leaves: LeaveRequest[] = [];
+<<<<<<< HEAD
+=======
+  public qcRecords: QCRecord[] = [];
+>>>>>>> 169af18 (first commit)
 
   constructor() {
     this.load();
@@ -419,6 +431,10 @@ export class DbSyncService {
     const savedPhotos = localStorage.getItem('stoneflow_photos');
     const savedUsers = localStorage.getItem('stoneflow_users');
     const savedLeaves = localStorage.getItem('stoneflow_leaves');
+<<<<<<< HEAD
+=======
+    const savedQcRecords = localStorage.getItem('stoneflow_qcrecords');
+>>>>>>> 169af18 (first commit)
 
     let parsedJobs = savedJobs ? JSON.parse(savedJobs) : INITIAL_JOBS;
     this.jobs = sanitizeIds(parsedJobs, 'SF');
@@ -433,6 +449,10 @@ export class DbSyncService {
     this.photos = savedPhotos ? sanitizeIds(JSON.parse(savedPhotos), 'p') : sanitizeIds(INITIAL_PHOTOS, 'p');
     this.users = savedUsers ? sanitizeIds(JSON.parse(savedUsers), 'u') : sanitizeIds(MOCK_USERS, 'u');
     this.leaves = savedLeaves ? sanitizeIds(JSON.parse(savedLeaves), 'lv') : sanitizeIds(INITIAL_LEAVES, 'lv');
+<<<<<<< HEAD
+=======
+    this.qcRecords = savedQcRecords ? sanitizeIds(JSON.parse(savedQcRecords), 'qc') : [];
+>>>>>>> 169af18 (first commit)
 
     this.runAutomatedRules();
     this.syncPhotosFromServer();
@@ -452,6 +472,10 @@ export class DbSyncService {
     localStorage.setItem('stoneflow_photos', JSON.stringify(this.photos));
     localStorage.setItem('stoneflow_users', JSON.stringify(this.users));
     localStorage.setItem('stoneflow_leaves', JSON.stringify(this.leaves));
+<<<<<<< HEAD
+=======
+    localStorage.setItem('stoneflow_qcrecords', JSON.stringify(this.qcRecords));
+>>>>>>> 169af18 (first commit)
 
     broadcastLocalUpdate();
     this.notify();
@@ -789,6 +813,37 @@ export class DbSyncService {
 
   getInstallations(): Installation[] { return this.installations; }
 
+<<<<<<< HEAD
+=======
+  getQCRecords(): QCRecord[] { return this.qcRecords; }
+
+  recordQCPass(jobId: string, inspectorName: string, checksSummary: string[], notes?: string, photoUrl?: string): QCRecord {
+    const job = this.jobs.find(j => j.id === jobId);
+    const newRecord: QCRecord = {
+      id: generateUniqueId('qc'),
+      job_id: jobId,
+      client_name: job?.client_name || `Job ${jobId}`,
+      inspector_name: inspectorName || 'Dan P. (Supervisor)',
+      passed_at: new Date().toISOString(),
+      checks_summary: checksSummary && checksSummary.length > 0 ? checksSummary : [
+        'Dimensions match layout drawing specifications exactly',
+        'Edge profile & surface polish consistent with requested grade',
+        'Material verified completely free of chips, cracks, or resin gaps',
+        'Fitted sink & hob cutouts verified safe against structural template',
+        'Slab label photographed and attached to project activity history'
+      ],
+      material: job?.material || 'Stone Slabs',
+      status: 'passed',
+      notes: notes || 'All factory quality standards satisfied. Approved for installation scheduling.',
+      photo_url: photoUrl
+    };
+    this.qcRecords.unshift(newRecord);
+    this.logActivity(jobId, 'u-2', `Factory QC Inspection passed by ${inspectorName}`);
+    this.save();
+    return newRecord;
+  }
+
+>>>>>>> 169af18 (first commit)
   updateInstallationRouteOrder(jobId: string, order: number) {
     const inst = this.installations.find(i => i.job_id === jobId);
     if (inst) {
@@ -1145,6 +1200,31 @@ export class DbSyncService {
     return false;
   }
 
+<<<<<<< HEAD
+=======
+  async updateInstallationChecklist(jobId: string, itemKey: string, isChecked: boolean) {
+    let inst = this.installations.find(i => i.job_id === jobId);
+    if (!inst) {
+      inst = {
+        id: generateUniqueId('inst-new'),
+        job_id: jobId,
+        scheduled_date: new Date().toISOString().split('T')[0],
+        scheduled_time: '12:00',
+        status: 'On site',
+        installer_id: 'u-4',
+        checklist: {}
+      };
+      this.installations.push(inst);
+    }
+    if (!inst.checklist) {
+      inst.checklist = {};
+    }
+    inst.checklist[itemKey] = isChecked;
+    this.save();
+    return inst.checklist;
+  }
+
+>>>>>>> 169af18 (first commit)
   async installerComplete(jobId: string, signName: string, signatureSvg?: string) {
     const job = this.jobs.find(j => j.id === jobId);
     if (!job) return;
@@ -1154,11 +1234,26 @@ export class DbSyncService {
     job.next_action = 'Generate final invoice and request payment completion';
 
     let inst = this.installations.find(i => i.job_id === jobId);
+<<<<<<< HEAD
+=======
+    const fullChecklist = {
+      leveling: true,
+      epoxy_joints: true,
+      cutouts_caulk: true,
+      photos_uploaded: true,
+      client_walkthrough: true
+    };
+
+>>>>>>> 169af18 (first commit)
     if (inst) {
       inst.status = 'Completed';
       inst.completed_at = new Date().toISOString();
       inst.signature_name = signName;
       inst.signature_svg = signatureSvg;
+<<<<<<< HEAD
+=======
+      inst.checklist = { ...(inst.checklist || {}), ...fullChecklist };
+>>>>>>> 169af18 (first commit)
     } else {
       inst = {
         id: generateUniqueId('inst-new'),
@@ -1169,11 +1264,33 @@ export class DbSyncService {
         installer_id: 'u-4',
         completed_at: new Date().toISOString(),
         signature_name: signName,
+<<<<<<< HEAD
         signature_svg: signatureSvg
+=======
+        signature_svg: signatureSvg,
+        checklist: fullChecklist
+>>>>>>> 169af18 (first commit)
       };
       this.installations.push(inst);
     }
 
+<<<<<<< HEAD
+=======
+    // Ensure site photo exists for gate verification
+    if (!this.photos.some(p => p.job_id === jobId && (p.category === 'site' || p.category === 'qc'))) {
+      const imgData = signatureSvg || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><rect width="600" height="400" fill="%230f172a"/><rect x="20" y="20" width="560" height="360" rx="12" fill="none" stroke="%230284c7" stroke-width="3"/><text x="300" y="190" fill="%2338bdf8" font-family="sans-serif" font-size="22" font-weight="extrabold" text-anchor="middle">SITE INSTALLATION VERIFIED</text><text x="300" y="230" fill="%23f8fafc" font-family="sans-serif" font-size="15" text-anchor="middle">Customer Sign-Off Attached</text></svg>';
+      const sitePhoto: JobPhoto = {
+        id: generateUniqueId('photo-site'),
+        job_id: jobId,
+        category: 'site',
+        url: imgData,
+        filename: `Installation_Completion_${jobId}.jpg`,
+        uploaded_at: new Date().toISOString()
+      };
+      this.photos.push(sitePhoto);
+    }
+
+>>>>>>> 169af18 (first commit)
     this.logActivity(jobId, 'u-4', `Installer sign-off completed by customer: ${signName}`);
     this.save();
     this.persistJob(job).catch(console.warn);
@@ -1380,4 +1497,7 @@ export class DbSyncService {
 export const dbSync = new DbSyncService();
 // Alias dbMock for seamless compatibility
 export const dbMock = dbSync;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 169af18 (first commit)

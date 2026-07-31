@@ -56,7 +56,11 @@ export const BillingClosed: React.FC<BillingClosedProps> = ({
       else if (job.current_stage >= 16) statusText = 'Paid & Settled';
 
       const inv = invoicesList.find(i => i.job_id === job.id);
+<<<<<<< HEAD
       const descText = job.job_description || job.notes || job.material || 'Custom Stone Fabrication';
+=======
+      const descText = job.material ? `${job.job_type || 'Custom Work'} — ${job.material}` : (job.job_type || 'Custom Stone Fabrication');
+>>>>>>> 169af18 (first commit)
 
       return `
         <tr>
@@ -189,7 +193,11 @@ export const BillingClosed: React.FC<BillingClosedProps> = ({
             <thead>
               <tr className="bg-soft border-b border-line text-[10px] tracking-widest text-mut uppercase font-semibold text-left">
                 <th className="py-3 px-6">Client / Job Details</th>
+<<<<<<< HEAD
                 <th className="py-3 px-6">Description &amp; Specifications</th>
+=======
+                <th className="py-3 px-6">Material &amp; Specifications</th>
+>>>>>>> 169af18 (first commit)
                 <th className="py-3 px-6">Current Workflow Stage</th>
                 <th className="py-3 px-6">Invoice Status</th>
                 <th className="py-3 px-6">Total Value</th>
@@ -243,6 +251,7 @@ export const BillingClosed: React.FC<BillingClosedProps> = ({
                       </td>
 
                       <td className="py-4.5 px-6 max-w-xs">
+<<<<<<< HEAD
                         {job.job_description ? (
                           <p className="text-xs font-medium text-ink leading-snug line-clamp-2">
                             {job.job_description}
@@ -256,6 +265,14 @@ export const BillingClosed: React.FC<BillingClosedProps> = ({
                             {job.material || 'Standard Stone Fabrication'}
                           </p>
                         )}
+=======
+                        <div className="text-xs font-bold text-ink leading-snug">
+                          {job.material || job.job_type || 'Custom Stone Work'}
+                        </div>
+                        <div className="text-[11px] text-mut font-medium mt-0.5">
+                          {job.job_type || 'Stone Fabrication'}
+                        </div>
+>>>>>>> 169af18 (first commit)
                         {inv?.invoice_notes && (
                           <p className="text-[10px] text-am font-medium mt-1 line-clamp-1">
                             📝 {inv.invoice_notes}

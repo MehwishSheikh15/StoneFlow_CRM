@@ -158,6 +158,10 @@ export interface Installation {
   notes?: string;
   installer_name?: string;
   route_order?: number;
+<<<<<<< HEAD
+=======
+  checklist?: Record<string, boolean>;
+>>>>>>> 169af18 (first commit)
 }
 
 export interface Invoice {
@@ -210,3 +214,19 @@ export interface LeaveRequest {
   timestamp: string;
 }
 
+<<<<<<< HEAD
+=======
+export interface QCRecord {
+  id: string;
+  job_id: string;
+  client_name: string;
+  inspector_name: string;
+  passed_at: string;
+  checks_summary: string[];
+  photo_url?: string;
+  material?: string;
+  status: 'passed' | 'flagged';
+  notes?: string;
+}
+
+>>>>>>> 169af18 (first commit)

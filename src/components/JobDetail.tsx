@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { extractPdfTextInBrowser } from '../utils/pdfParser';
+<<<<<<< HEAD
+=======
+import { generateStickerPDF } from '../lib/stickerPdfGenerator';
+>>>>>>> 169af18 (first commit)
 import { 
   ArrowLeft, 
   Pencil, 
@@ -4783,10 +4787,25 @@ export const JobDetail: React.FC<JobDetailProps> = ({
                       <div className="flex gap-2">
                         <button
                           onClick={() => {
+<<<<<<< HEAD
                             dbMock.logActivity(job.id, currentUser?.id || 'u-1', `Printed physical QR tracking sticker code for Job ${job.id}`);
                             dbMock.saveAsync().catch(console.warn);
                             onToast(`QR Code tracking event saved for Job ${job.id}`);
                             window.print();
+=======
+                            dbMock.logActivity(job.id, currentUser?.id || 'u-1', `Printed physical QR tracking sticker code PDF for Job ${job.id}`);
+                            dbMock.saveAsync().catch(console.warn);
+                            generateStickerPDF({
+                              targetId: job.id,
+                              title: `Job ${job.id} - ${job.client_name}`,
+                              subtitle: `Type: ${job.job_type || 'Custom Worktop'} | Material: ${job.material || 'Stone Slabs'}`,
+                              material: job.material,
+                              extra: `Site: ${job.site_address || 'Workshop'}`,
+                              type: 'job',
+                              clientName: job.client_name
+                            });
+                            onToast(`PDF QR Code Sticker generated & downloaded for Job ${job.id}!`);
+>>>>>>> 169af18 (first commit)
                           }}
                           className="px-4 py-2 bg-sap text-white font-bold rounded-lg text-xs hover:opacity-90 flex items-center gap-1.5 cursor-pointer shadow-md shadow-sap/20"
                         >

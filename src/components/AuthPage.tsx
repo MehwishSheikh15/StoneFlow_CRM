@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { User } from '../types';
 import { Shield, Mail, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { dbSync as dbMock } from '../lib/dbSync';
+<<<<<<< HEAD
+=======
+import { GoogleSignInModal } from './GoogleSignInModal';
+>>>>>>> 169af18 (first commit)
 
 interface AuthPageProps {
   onLoginSuccess: (user: User) => void;
@@ -11,18 +15,34 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
   const [view, setView] = useState<'login' | 'forgot' | 'reset'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+<<<<<<< HEAD
+=======
+
+  // Password Reset state
+>>>>>>> 169af18 (first commit)
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [inputCode, setInputCode] = useState('');
+<<<<<<< HEAD
   const [sentNotification, setSentNotification] = useState<{ email: string; code: string; time: string } | null>(null);
+=======
+  const [sentNotification, setSentNotification] = useState<{ email: string; code: string; time: string; deliveredLive: boolean; smtpError?: string } | null>(null);
+  
+>>>>>>> 169af18 (first commit)
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+<<<<<<< HEAD
   const [showGoogleSelect, setShowGoogleSelect] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
+=======
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+
+  const handleLoginSubmit = (e: React.FormEvent) => {
+>>>>>>> 169af18 (first commit)
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
@@ -43,7 +63,11 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
       return;
     }
 
+<<<<<<< HEAD
     setError('These credentials do not match our records.');
+=======
+    setError('These credentials do not match our registered records. Please contact an admin if you need an account created.');
+>>>>>>> 169af18 (first commit)
   };
 
   const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
@@ -71,12 +95,30 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
     const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
     setVerificationCode(generatedCode);
 
+<<<<<<< HEAD
     try {
       await fetch('/api/auth/send-reset-notification', {
+=======
+    let deliveredLive = false;
+    let smtpError: string | undefined = undefined;
+
+    try {
+      const res = await fetch('/api/auth/send-reset-notification', {
+>>>>>>> 169af18 (first commit)
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: normalizedEmail, resetCode: generatedCode })
       });
+<<<<<<< HEAD
+=======
+      const data = await res.json();
+      if (data.deliveredLive) {
+        deliveredLive = true;
+      }
+      if (data.smtpError) {
+        smtpError = data.smtpError;
+      }
+>>>>>>> 169af18 (first commit)
     } catch (e) {
       console.warn('Backend notification email endpoint call failed, continuing with generated code:', e);
     }
@@ -85,9 +127,21 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
     setSentNotification({
       email: normalizedEmail,
       code: generatedCode,
+<<<<<<< HEAD
       time: new Date().toLocaleTimeString()
     });
     setSuccessMsg(`Password reset notification sent to ${normalizedEmail}! Please check your email for verification code.`);
+=======
+      time: new Date().toLocaleTimeString(),
+      deliveredLive,
+      smtpError
+    });
+    setSuccessMsg(
+      deliveredLive
+        ? `Verification email sent to ${normalizedEmail}! Code is also shown on screen below for instant testing.`
+        : `Reset code generated for ${normalizedEmail}.`
+    );
+>>>>>>> 169af18 (first commit)
     setView('reset');
   };
 
@@ -126,7 +180,11 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
     setIsLoading(false);
 
     if (success) {
+<<<<<<< HEAD
       setSuccessMsg('Your credentials & password have been reset and saved to database! You can now log in.');
+=======
+      setSuccessMsg('Your credentials & password have been reset and saved! You can now log in.');
+>>>>>>> 169af18 (first commit)
       setView('login');
       setPassword('');
       setNewPassword('');
@@ -140,16 +198,24 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
   };
 
   const handleGoogleLogin = () => {
+<<<<<<< HEAD
     setShowGoogleSelect(!showGoogleSelect);
   };
 
   const handleGoogleUserSelect = (user: User) => {
     onLoginSuccess(user);
+=======
+    setIsGoogleModalOpen(true);
+>>>>>>> 169af18 (first commit)
   };
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-zinc-50 dark:bg-zinc-950 font-sans px-4 py-12 selection:bg-indigo-500 selection:text-white">
+<<<<<<< HEAD
       {/* Centered Breeze Logo branding */}
+=======
+      {/* Centered Logo branding */}
+>>>>>>> 169af18 (first commit)
       <div className="mb-6 text-center space-y-2">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs text-indigo-600 dark:text-indigo-400">
           <Shield className="w-6 h-6" />
@@ -157,9 +223,18 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
           StoneFlow CRM
         </h2>
+<<<<<<< HEAD
       </div>
 
       {/* Card Wrapper structured as Laravel Breeze standard layout */}
+=======
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+          Authorized Team Workspace Sign-In
+        </p>
+      </div>
+
+      {/* Card Wrapper */}
+>>>>>>> 169af18 (first commit)
       <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/80 shadow-md rounded-xl p-8 space-y-6">
         {error && (
           <div className="p-3 bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 text-xs rounded-lg border border-red-200 dark:border-red-900/30 font-semibold flex items-start gap-2">
@@ -177,7 +252,11 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
 
         {view === 'login' && (
           <>
+<<<<<<< HEAD
             {/* Google Breeze SSO integration */}
+=======
+            {/* Google SSO integration */}
+>>>>>>> 169af18 (first commit)
             <div className="space-y-4">
               <button
                 type="button"
@@ -194,6 +273,7 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
                 Sign in with Google
               </button>
 
+<<<<<<< HEAD
               {showGoogleSelect && (
                 <div className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 space-y-2.5 animate-scale-in">
                   <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
@@ -220,6 +300,8 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
                 </div>
               )}
 
+=======
+>>>>>>> 169af18 (first commit)
               <div className="flex items-center justify-center gap-3">
                 <div className="h-px bg-zinc-200 dark:bg-zinc-800 flex-grow" />
                 <span className="text-[10px] uppercase font-bold text-zinc-400 dark:text-zinc-500 tracking-wider">
@@ -229,7 +311,11 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
               </div>
             </div>
 
+<<<<<<< HEAD
             <form onSubmit={handleSubmit} className="space-y-4">
+=======
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
+>>>>>>> 169af18 (first commit)
               {/* Email Input */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
@@ -257,7 +343,11 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
                   <button
                     type="button"
                     onClick={() => setView('forgot')}
+<<<<<<< HEAD
                     className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+=======
+                    className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+>>>>>>> 169af18 (first commit)
                   >
                     Forgot your password?
                   </button>
@@ -275,7 +365,11 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
+<<<<<<< HEAD
                     className="absolute right-3 top-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+=======
+                    className="absolute right-3 top-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+>>>>>>> 169af18 (first commit)
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -300,7 +394,11 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
                 Reset Password
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+<<<<<<< HEAD
                 Forgot your password? No problem. Just let us know your email address and we will locate your registered profile to reset your password instantly.
+=======
+                Enter your registered team email address to locate your profile and receive a password reset verification code.
+>>>>>>> 169af18 (first commit)
               </p>
             </div>
 
@@ -348,13 +446,18 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
           <div className="space-y-5">
             <div className="space-y-2">
               <h3 className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+<<<<<<< HEAD
                 Verify Email & Set New Password
+=======
+                Verify Email &amp; Set New Password
+>>>>>>> 169af18 (first commit)
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 Resetting password for account <strong className="text-indigo-600 dark:text-indigo-400 font-mono">{email}</strong>
               </p>
             </div>
 
+<<<<<<< HEAD
             {/* Email Notification Simulation Card */}
             {sentNotification && (
               <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-lg space-y-1.5 text-xs text-amber-900 dark:text-amber-200 animate-fade-in">
@@ -370,6 +473,31 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
                 </p>
                 <div className="p-2 bg-white dark:bg-zinc-900 border border-amber-300 dark:border-amber-700 rounded text-center font-mono text-base font-extrabold tracking-widest text-amber-600 dark:text-amber-400">
                   {sentNotification.code}
+=======
+            {/* Verification Code Box */}
+            {sentNotification && (
+              <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl space-y-2 text-xs text-amber-900 dark:text-amber-200 animate-fade-in shadow-xs">
+                <div className="flex items-center justify-between font-bold">
+                  <span className="flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+                    <Mail className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    {sentNotification.deliveredLive ? 'Reset Code Sent (Also Shown Below)' : 'Generated Reset Code'}
+                  </span>
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 font-mono">{sentNotification.time}</span>
+                </div>
+                <div className="p-2.5 bg-white dark:bg-zinc-900 border border-amber-200 dark:border-amber-700/60 rounded-lg flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400">Generated Reset Code</div>
+                    <div className="font-mono text-xl font-extrabold tracking-widest text-zinc-900 dark:text-zinc-100">{sentNotification.code}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setInputCode(sentNotification.code)}
+                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-md transition-all cursor-pointer shadow-xs flex items-center gap-1"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Autofill Code
+                  </button>
+>>>>>>> 169af18 (first commit)
                 </div>
               </div>
             )}
@@ -453,6 +581,15 @@ export function AuthPage({ onLoginSuccess }: AuthPageProps) {
           </div>
         )}
       </div>
+<<<<<<< HEAD
+=======
+
+      <GoogleSignInModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        onLoginSuccess={onLoginSuccess}
+      />
+>>>>>>> 169af18 (first commit)
     </div>
   );
 }

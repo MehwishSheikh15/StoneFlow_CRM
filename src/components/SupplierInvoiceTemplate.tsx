@@ -580,6 +580,7 @@ export const SupplierInvoiceTemplate: React.FC<SupplierInvoiceTemplateProps> = (
           </div>
         </div>
 
+<<<<<<< HEAD
         {/* Job Description & Scope Summary */}
         {(job.job_description || job.notes || job.material) && (
           <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-3.5 mb-5 space-y-1">
@@ -588,6 +589,16 @@ export const SupplierInvoiceTemplate: React.FC<SupplierInvoiceTemplateProps> = (
             </span>
             <p className="text-xs font-medium text-zinc-800 leading-relaxed">
               {job.job_description || job.notes || job.material}
+=======
+        {/* Material & Scope Specifications */}
+        {(job.material || job.job_type) && (
+          <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-3.5 mb-5 space-y-1">
+            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block">
+              Material &amp; Scope Specs
+            </span>
+            <p className="text-xs font-bold text-zinc-800 leading-relaxed">
+              {job.material ? `${job.job_type || 'Custom Work'} — ${job.material}` : (job.job_type || 'Stone Fabrication')}
+>>>>>>> 169af18 (first commit)
             </p>
             {job.site_address && (
               <p className="text-[11px] text-zinc-500 font-normal pt-1 border-t border-zinc-200/80">

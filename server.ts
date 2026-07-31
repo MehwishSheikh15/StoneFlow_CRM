@@ -16,6 +16,153 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+<<<<<<< HEAD
+=======
+// ======================================================================
+// STONEFLOW RELIABLE SERVER DATABASE ENGINE (StoneDB)
+// ======================================================================
+
+interface StoneDBData {
+  jobs: any[];
+  materials: any[];
+  offcuts: any[];
+  drawings: any[];
+  installations: any[];
+  invoices: any[];
+  warnings: any[];
+  activities: any[];
+  history: any[];
+  photos: any[];
+  users: any[];
+  leaves?: any[];
+}
+
+const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), "data");
+const DB_FILE_PATH = path.join(DATA_DIR, "stoneflow_crm.json");
+
+const DEFAULT_SEED_JOBS: any[] = [];
+
+const DEFAULT_SEED_USERS = [
+  { id: 'u-1', name: 'Mehwish', initials: 'MS', role: 'owner', avatarBg: 'bg-indigo-600 text-white', avatar_bg: 'bg-indigo-600 text-white', email: 'owner@stoneflow.com', password: 'owner123' },
+  { id: 'u-2', name: 'Sara M.', initials: 'SM', role: 'office', avatarBg: 'bg-zinc-600 text-white', avatar_bg: 'bg-zinc-600 text-white', email: 'office@stoneflow.com', password: 'office123' },
+  { id: 'u-3', name: 'Rashid K.', initials: 'RK', role: 'factory', avatarBg: 'bg-teal-600 text-white', avatar_bg: 'bg-teal-600 text-white', email: 'factory@stoneflow.com', password: 'factory123' },
+  { id: 'u-4', name: 'Tom J.', initials: 'TJ', role: 'installer', avatarBg: 'bg-amber-600 text-white', avatar_bg: 'bg-amber-600 text-white', email: 'installer@stoneflow.com', password: 'installer123' }
+];
+
+class StoneDBEngine {
+  private data: StoneDBData = {
+    jobs: [],
+    materials: [],
+    offcuts: [],
+    drawings: [],
+    installations: [],
+    invoices: [],
+    warnings: [],
+    activities: [],
+    history: [],
+    photos: [],
+    users: [],
+    leaves: []
+  };
+
+  constructor() {
+    this.init();
+  }
+
+  private init() {
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+      if (fs.existsSync(DB_FILE_PATH)) {
+        const raw = fs.readFileSync(DB_FILE_PATH, "utf-8");
+        const parsed = JSON.parse(raw);
+        this.data = {
+          jobs: parsed.jobs || [],
+          materials: parsed.materials || [],
+          offcuts: parsed.offcuts || [],
+          drawings: parsed.drawings || [],
+          installations: parsed.installations || [],
+          invoices: parsed.invoices || [],
+          warnings: parsed.warnings || [],
+          activities: parsed.activities || [],
+          history: parsed.history || [],
+          photos: parsed.photos || [],
+          users: parsed.users && parsed.users.length > 0 ? parsed.users : DEFAULT_SEED_USERS,
+          leaves: parsed.leaves || []
+        };
+        this.persistToDisk();
+        console.log(`[StoneDB] Loaded ${this.data.jobs.length} jobs and ${this.data.users.length} users from disk store.`);
+      } else {
+        console.log(`[StoneDB] Initializing clean StoneDB CRM store...`);
+        this.data.jobs = [];
+        this.data.users = DEFAULT_SEED_USERS;
+        this.persistToDisk();
+      }
+    } catch (err) {
+      console.error("[StoneDB] Error reading database file:", err);
+      this.data.jobs = [];
+      this.data.users = DEFAULT_SEED_USERS;
+    }
+  }
+
+  public persistToDisk() {
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+      const tmpPath = `${DB_FILE_PATH}.tmp`;
+      fs.writeFileSync(tmpPath, JSON.stringify(this.data, null, 2), "utf-8");
+      try {
+        fs.renameSync(tmpPath, DB_FILE_PATH);
+      } catch (renameErr) {
+        fs.writeFileSync(DB_FILE_PATH, JSON.stringify(this.data, null, 2), "utf-8");
+      }
+    } catch (err) {
+      console.error("[StoneDB] Disk write error:", err);
+    }
+  }
+
+  public getData(): StoneDBData {
+    return this.data;
+  }
+
+  public updateData(newData: Partial<StoneDBData>, mode: 'replace' | 'upsert' = 'upsert') {
+    const keys: (keyof StoneDBData)[] = [
+      'jobs', 'materials', 'offcuts', 'drawings', 'installations',
+      'invoices', 'warnings', 'activities', 'history', 'photos', 'users', 'leaves'
+    ];
+
+    keys.forEach(key => {
+      const newItems = newData[key];
+      if (Array.isArray(newItems)) {
+        if (mode === 'replace') {
+          (this.data[key] as any[]) = newItems;
+        } else {
+          // Upsert items by id so partial saves never wipe existing collection
+          const existing = (this.data[key] as any[]) || [];
+          newItems.forEach(item => {
+            if (!item || (!item.id && !item.slab_id)) return;
+            const targetId = item.id || item.slab_id;
+            const idx = existing.findIndex(x => x && (x.id || x.slab_id) && String(x.id || x.slab_id).trim().toLowerCase() === String(targetId).trim().toLowerCase());
+            if (idx >= 0) {
+              existing[idx] = { ...existing[idx], ...item };
+            } else {
+              existing.unshift(item);
+            }
+          });
+          (this.data[key] as any[]) = existing;
+        }
+      }
+    });
+
+    this.persistToDisk();
+  }
+}
+
+const stoneDB = new StoneDBEngine();
+
+>>>>>>> 169af18 (first commit)
 // Health Check Endpoints for Railway & Container Orchestrators
 app.get(["/health", "/healthz", "/api/health", "/ping"], (req, res) => {
   res.status(200).json({ status: "ok", uptime: process.uptime(), timestamp: new Date().toISOString() });
@@ -627,6 +774,7 @@ Provide a structured 5-bullet CAD QA report:
   }
 });
 
+<<<<<<< HEAD
 // ======================================================================
 // STONEFLOW RELIABLE SERVER DATABASE ENGINE (StoneDB)
 // ======================================================================
@@ -771,6 +919,8 @@ class StoneDBEngine {
 
 const stoneDB = new StoneDBEngine();
 
+=======
+>>>>>>> 169af18 (first commit)
 // 2. Fetch all tables from StoneDB (Sync)
 app.get("/api/db/sync", async (req, res) => {
   try {
@@ -1433,4 +1583,7 @@ async function setupVite() {
 setupVite();
 
 export default app;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 169af18 (first commit)

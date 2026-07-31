@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { QrCode, Camera, Upload, X, Check, Search, ExternalLink, Printer } from 'lucide-react';
 import { dbSync as dbMock, STAGES } from '../lib/dbSync';
+<<<<<<< HEAD
+=======
+import { generateStickerPDF } from '../lib/stickerPdfGenerator';
+>>>>>>> 169af18 (first commit)
 
 interface QRModalProps {
   isOpen: boolean;
@@ -213,6 +217,7 @@ export const QRModal: React.FC<QRModalProps> = ({
   const handlePrint = () => {
     if (targetId) {
       if (targetType === 'job' || targetId.startsWith('SF-')) {
+<<<<<<< HEAD
         dbMock.logActivity(targetId, 'u-1', `Printed physical QR tracking sticker code for Job ${targetId}`);
       } else {
         dbMock.logActivity('SF-1031', 'u-1', `Printed physical QR code label for ${targetType || 'item'} ${targetId}`);
@@ -220,6 +225,21 @@ export const QRModal: React.FC<QRModalProps> = ({
       dbMock.saveAsync().catch(console.warn);
     }
     window.print();
+=======
+        dbMock.logActivity(targetId, 'u-1', `Printed physical QR tracking sticker code PDF for Job ${targetId}`);
+      } else {
+        dbMock.logActivity('SF-1031', 'u-1', `Printed physical QR code label PDF for ${targetType || 'item'} ${targetId}`);
+      }
+      dbMock.saveAsync().catch(console.warn);
+    }
+    generateStickerPDF({
+      targetId: targetId || 'STONEFLOW-QR',
+      title: payload?.title || `Slab/Job Label ${targetId}`,
+      subtitle: payload?.subtitle,
+      extra: payload?.extra,
+      type: (targetType === 'slab' || targetType === 'offcut') ? targetType : 'job'
+    });
+>>>>>>> 169af18 (first commit)
   };
 
   return (
